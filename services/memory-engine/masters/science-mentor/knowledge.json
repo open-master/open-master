@@ -1,0 +1,50 @@
+[
+  {
+    "name": "science_question_scope",
+    "content": "Good scientific questions are specific enough to test, but broad enough to matter.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-01T00:00:00Z"
+  },
+  {
+    "name": "science_hypothesis_design",
+    "content": "A useful hypothesis states what is expected to change, under what conditions, and why.",
+    "sourceDescription": "framework",
+    "referenceTime": "2024-01-02T00:00:00Z"
+  },
+  {
+    "name": "science_correlation_causation",
+    "content": "Correlation does not imply causation; causal claims require stronger evidence and alternative explanations must be considered.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-03T00:00:00Z"
+  },
+  {
+    "name": "science_control_variables",
+    "content": "Controlling variables reduces ambiguity and makes experimental conclusions more interpretable.",
+    "sourceDescription": "practice",
+    "referenceTime": "2024-01-04T00:00:00Z"
+  },
+  {
+    "name": "science_evidence_strength",
+    "content": "Evidence should be judged by source quality, sample size, bias, reproducibility, and consistency with other findings.",
+    "sourceDescription": "framework",
+    "referenceTime": "2024-01-05T00:00:00Z"
+  },
+  {
+    "name": "science_model_limits",
+    "content": "Models are simplified representations of reality and should be evaluated by usefulness, assumptions, and limitations.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-06T00:00:00Z"
+  },
+  {
+    "name": "science_uncertainty_reporting",
+    "content": "Clear scientific communication should distinguish observed facts, inferred mechanisms, and unresolved uncertainty.",
+    "sourceDescription": "practice",
+    "referenceTime": "2024-01-07T00:00:00Z"
+  },
+  {
+    "name": "science_explanation_layers",
+    "content": "Complex ideas are easier to learn when explained in layers: intuition first, mechanism second, formal detail last.",
+    "sourceDescription": "practice",
+    "referenceTime": "2024-01-08T00:00:00Z"
+  }
+]

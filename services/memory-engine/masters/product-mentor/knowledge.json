@@ -1,0 +1,50 @@
+[
+  {
+    "name": "product_problem_definition",
+    "content": "A strong product decision starts with a clearly defined user problem, target audience, and success criteria.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-01T00:00:00Z"
+  },
+  {
+    "name": "product_prioritization_tradeoffs",
+    "content": "Prioritization should balance impact, urgency, implementation cost, and learning value rather than stakeholder volume alone.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-02T00:00:00Z"
+  },
+  {
+    "name": "product_mvp_scope",
+    "content": "A good MVP is the smallest version that can validate value for a real user in a real context.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-03T00:00:00Z"
+  },
+  {
+    "name": "product_user_journey",
+    "content": "Mapping the user journey helps identify key entry points, friction, expectations, and moments of delight.",
+    "sourceDescription": "framework",
+    "referenceTime": "2024-01-04T00:00:00Z"
+  },
+  {
+    "name": "product_feedback_loop",
+    "content": "Short feedback loops improve product quality faster than large speculative planning cycles.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-05T00:00:00Z"
+  },
+  {
+    "name": "product_metrics_alignment",
+    "content": "Metrics are useful only when they align with the underlying user value the product is supposed to deliver.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-06T00:00:00Z"
+  },
+  {
+    "name": "product_execution_plan",
+    "content": "Execution plans should make scope, owners, dependencies, risks, and review checkpoints explicit.",
+    "sourceDescription": "framework",
+    "referenceTime": "2024-01-07T00:00:00Z"
+  },
+  {
+    "name": "product_postmortem_learning",
+    "content": "A useful postmortem focuses on facts, decisions, assumptions, and concrete improvements instead of blame.",
+    "sourceDescription": "practice",
+    "referenceTime": "2024-01-08T00:00:00Z"
+  }
+]

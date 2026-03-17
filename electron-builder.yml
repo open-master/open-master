@@ -1,0 +1,54 @@
+appId: com.openmaster.app
+productName: Open Master
+copyright: Copyright © 2026 Open Master
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist-electron/**/*
+  - package.json
+  - "!node_modules/**/*"
+
+extraResources:
+  - from: .next/standalone
+    to: standalone
+    filter:
+      - "**/*"
+  - from: .next/static
+    to: standalone/.next/static
+    filter:
+      - "**/*"
+  - from: public
+    to: standalone/public
+    filter:
+      - "**/*"
+  - from: services/mem0-service/server.cjs
+    to: mem0-service/server.cjs
+  - from: services/mem0-service/node_modules
+    to: mem0-service/node_modules
+    filter:
+      - "**/*"
+  - from: services/memory-engine/dist-macos/open-master-memory-engine
+    to: memory-engine/open-master-memory-engine
+    filter:
+      - "**/*"
+  - from: services/memory-engine/masters
+    to: memory-engine/masters
+    filter:
+      - "**/*"
+
+mac:
+  icon: public/icon.icns
+  category: public.app-category.productivity
+  darkModeSupport: true
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  artifactName: "${productName}-${version}-mac-arm64.${ext}"
+
+dmg:
+  title: "${productName}"
+  artifactName: "${productName}-${version}-mac-arm64.dmg"

@@ -1,0 +1,66 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${WEB_PORT:-3100}:3000"
+    volumes:
+      - .:/app
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+    env_file: .env
+    environment:
+      - MEMORY_ENGINE_URL=http://memory-engine:8000
+      - MEM0_SERVICE_URL=http://mem0-service:3010
+      - WATCHPACK_POLLING=true
+    depends_on:
+      memory-engine:
+        condition: service_healthy
+      mem0-service:
+        condition: service_started
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+  mem0-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["node", "services/mem0-service/server.cjs"]
+    volumes:
+      - .:/app
+      - mem0_node_modules:/app/node_modules
+      - mem0_data:/app/data
+    env_file: .env
+    environment:
+      - MEM0_SERVICE_PORT=3010
+      - MEMORY_DB_PATH=/app/data/memory.db
+    restart: unless-stopped
+
+  memory-engine:
+    build:
+      context: ./services/memory-engine
+      dockerfile: Dockerfile
+    ports:
+      - "${MEMORY_ENGINE_PORT:-8000}:8000"
+    volumes:
+      - ./services/memory-engine/app:/app/app
+      - ./services/memory-engine/masters:/app/masters:ro
+      - master_data_kuzu:/data/kuzu
+    env_file: .env
+    environment:
+      - KUZU_DB_PATH=/data/graphiti.kuzu
+      - MASTERS_DIR=/app/masters
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  web_node_modules:
+  web_next:
+  mem0_node_modules:
+  mem0_data:
+  master_data_kuzu:

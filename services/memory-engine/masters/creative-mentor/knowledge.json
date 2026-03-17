@@ -1,0 +1,50 @@
+[
+  {
+    "name": "creative_theme_definition",
+    "content": "Strong creative work starts with a clear theme, audience, mood, and intended impression.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-01T00:00:00Z"
+  },
+  {
+    "name": "creative_concept_motif",
+    "content": "A motif gives a project recognizability by repeating an idea across visual, verbal, and structural details.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-02T00:00:00Z"
+  },
+  {
+    "name": "creative_divergence_convergence",
+    "content": "Creative process benefits from separating divergence for idea generation and convergence for selection and refinement.",
+    "sourceDescription": "framework",
+    "referenceTime": "2024-01-03T00:00:00Z"
+  },
+  {
+    "name": "creative_contrast_balance",
+    "content": "Contrast creates attention, but balance and hierarchy keep the message readable and coherent.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-04T00:00:00Z"
+  },
+  {
+    "name": "creative_reference_usage",
+    "content": "References are most useful when they clarify mood and structure rather than being copied literally.",
+    "sourceDescription": "practice",
+    "referenceTime": "2024-01-05T00:00:00Z"
+  },
+  {
+    "name": "creative_storytelling_arc",
+    "content": "A compelling concept usually has a hook, a clear point of view, and a memorable closing beat.",
+    "sourceDescription": "framework",
+    "referenceTime": "2024-01-06T00:00:00Z"
+  },
+  {
+    "name": "creative_editing_for_clarity",
+    "content": "Editing often improves creative work more than adding more elements; removal strengthens coherence.",
+    "sourceDescription": "principle",
+    "referenceTime": "2024-01-07T00:00:00Z"
+  },
+  {
+    "name": "creative_multi_direction_exploration",
+    "content": "Comparing two or three distinct directions helps teams discuss taste, risk, and positioning more effectively than polishing one option too early.",
+    "sourceDescription": "practice",
+    "referenceTime": "2024-01-08T00:00:00Z"
+  }
+]
