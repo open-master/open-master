@@ -8,6 +8,7 @@ import {
   DEFAULT_EMBEDDING_CONFIG,
 } from '@/lib/memory/types';
 import { type TTSConfig, DEFAULT_TTS_CONFIG } from '@/lib/tts/types';
+import { type DJConfig, DEFAULT_DJ_CONFIG } from '@/lib/dj/types';
 
 type View = 'chat' | 'settings';
 
@@ -47,6 +48,12 @@ interface AppState {
 
   ttsConfig: TTSConfig;
   setTtsConfig: (config: Partial<TTSConfig>) => void;
+
+  djConfig: DJConfig;
+  setDjConfig: (config: Partial<DJConfig>) => void;
+
+  pairingRequestId: string | null;
+  setPairingRequestId: (id: string | null) => void;
 
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
@@ -156,6 +163,15 @@ export const useAppStore = create<AppState>()(
           ttsConfig: { ...state.ttsConfig, ...config },
         })),
 
+      djConfig: { ...DEFAULT_DJ_CONFIG },
+      setDjConfig: (config) =>
+        set((state) => ({
+          djConfig: { ...state.djConfig, ...config },
+        })),
+
+      pairingRequestId: null,
+      setPairingRequestId: (id) => set({ pairingRequestId: id }),
+
       sidebarCollapsed: false,
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
@@ -169,6 +185,7 @@ export const useAppStore = create<AppState>()(
         providerConfig: state.providerConfig,
         embeddingConfig: state.embeddingConfig,
         ttsConfig: state.ttsConfig,
+        djConfig: state.djConfig,
         selectedMasterId: state.selectedMasterId,
         sidebarCollapsed: state.sidebarCollapsed,
         activeMasterIds: state.activeMasterIds,
@@ -196,6 +213,10 @@ export const useAppStore = create<AppState>()(
               ...((p.ttsConfig as TTSConfig | undefined)?.masterVoices ?? {}),
             },
             clonedVoices: (p.ttsConfig as TTSConfig | undefined)?.clonedVoices ?? [],
+          },
+          djConfig: {
+            ...DEFAULT_DJ_CONFIG,
+            ...((p.djConfig as DJConfig | undefined) ?? {}),
           },
           activeMasterIds:
             p.activeMasterIds && p.activeMasterIds.length > 0

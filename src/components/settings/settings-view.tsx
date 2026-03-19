@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import {
   ArrowLeft, Eye, EyeOff, Sun, Moon, Monitor,
   Palette, Cpu, Brain, Check, ChevronDown, Trash2, Volume2,
-  Mic, Upload, X, Loader2, Play, Square, Trash,
+  Mic, Upload, X, Loader2, Play, Square, Trash, Music, Link,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAppStore } from '@/lib/store';
@@ -44,12 +44,14 @@ const PROVIDER_META: Record<ProviderType, { field: ApiKeyField; placeholder: str
   kimi: { field: 'kimiApiKey', placeholder: 'sk-...', url: 'platform.moonshot.cn' },
 };
 
-type SettingsTab = 'appearance' | 'model' | 'memory' | 'tts';
+import { WORK_STATE_LABELS } from '@/lib/dj/types';
+
+type SettingsTab = 'appearance' | 'model' | 'memory' | 'tts' | 'dj';
 
 export function SettingsView() {
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
-  const { providerConfig, setProviderConfig, embeddingConfig, setEmbeddingConfig, ttsConfig, setTtsConfig, setCurrentView, customMasters, activeMasterIds } = useAppStore();
+  const { providerConfig, setProviderConfig, embeddingConfig, setEmbeddingConfig, ttsConfig, setTtsConfig, djConfig, setDjConfig, setCurrentView, customMasters, activeMasterIds, pairingRequestId } = useAppStore();
   const [activeProvider, setActiveProvider] = useState<ProviderType>(providerConfig.selectedProvider);
   const [showKey, setShowKey] = useState(false);
   const [showEmbeddingKey, setShowEmbeddingKey] = useState(false);
@@ -874,6 +876,204 @@ export function SettingsView() {
     </div>
   );
 
+  const renderDjTab = () => (
+    <div className="mx-auto max-w-3xl">
+      <h2 className="mb-6 text-[22px] font-bold text-foreground">Vibe 音乐</h2>
+
+      <div className="mb-8 overflow-hidden rounded-xl border border-border bg-card/40">
+        <div className="flex items-center justify-between p-5">
+          <div className="pr-6">
+            <div className="text-[14px] font-medium text-foreground">启用 Vibe 模式</div>
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              监控 OpenClaw 工作状态，自动播放匹配的音乐
+            </div>
+          </div>
+          <button
+            onClick={() => setDjConfig({ enabled: !djConfig.enabled })}
+            className={cn(
+              'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+              djConfig.enabled ? 'bg-primary' : 'bg-muted-foreground/20'
+            )}
+          >
+            <span
+              className={cn(
+                'absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                djConfig.enabled && 'translate-x-5'
+              )}
+            />
+          </button>
+        </div>
+      </div>
+
+      <h3 className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-muted-foreground">
+        OpenClaw 连接
+        <button
+          onClick={() => {
+            if (pairingRequestId) {
+              window.alert(
+                `OpenClaw 设备配对\n\n首次连接需要在服务器上授权本设备，请在 OpenClaw 服务器上运行：\n\nopenclaw devices approve ${pairingRequestId}\n\n授权后将自动重新连接。`
+              );
+            } else if (!djConfig.openclawEndpoint?.trim()) {
+              window.alert('请先填写 WebSocket 地址');
+            } else {
+              window.alert('连接正常，设备已配对。');
+            }
+          }}
+          title={pairingRequestId ? '设备未配对，点击查看配对指令' : djConfig.openclawEndpoint?.trim() ? '已配对' : '检查连接状态'}
+          className={cn(
+            'flex h-6 w-6 items-center justify-center rounded-full transition-colors',
+            pairingRequestId
+              ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50'
+              : djConfig.openclawEndpoint?.trim()
+                ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+                : 'bg-muted/50 text-muted-foreground hover:bg-accent'
+          )}
+        >
+          <Link className="h-3.5 w-3.5" />
+        </button>
+        {pairingRequestId && (
+          <span className="text-[12px] font-normal text-amber-600 dark:text-amber-400">需要配对</span>
+        )}
+      </h3>
+
+      <div className="mb-8 overflow-hidden rounded-xl border border-border bg-card/40">
+        <div className="flex items-center justify-between border-b border-border/50 p-5">
+          <div className="w-1/3 pr-6">
+            <div className="text-[14px] font-medium text-foreground">WebSocket 地址</div>
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              OpenClaw 的 WebSocket 地址
+            </div>
+          </div>
+          <div className="flex-1">
+            <input
+              type="text"
+              value={djConfig.openclawEndpoint}
+              onChange={(e) => setDjConfig({ openclawEndpoint: e.target.value })}
+              placeholder="ws://host:port"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-[13px] font-mono placeholder:text-muted-foreground/30 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between p-5">
+          <div className="w-1/3 pr-6">
+            <div className="text-[14px] font-medium text-foreground">Gateway Token</div>
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              访问令牌
+            </div>
+          </div>
+          <div className="flex-1">
+            <input
+              type="password"
+              value={djConfig.openclawToken}
+              onChange={(e) => setDjConfig({ openclawToken: e.target.value })}
+              placeholder="留空则无需认证"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-[13px] placeholder:text-muted-foreground/30 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+      </div>
+
+      <h3 className="mb-3 text-[14px] font-semibold text-muted-foreground">
+        音乐生成
+      </h3>
+      <div className="mb-8 overflow-hidden rounded-xl border border-border bg-card/40">
+        <div className="flex items-center justify-between border-b border-border/50 p-5">
+          <div className="w-1/3 pr-6">
+            <div className="text-[14px] font-medium text-foreground">音乐类型</div>
+            <div className="mt-1 text-[13px] text-muted-foreground">生成纯音乐或带歌词的歌曲</div>
+          </div>
+          <div className="flex items-center rounded-lg bg-secondary/50 p-1">
+            {[
+              { value: true, label: '纯音乐' },
+              { value: false, label: '带歌词' },
+            ].map(({ value, label }) => (
+              <button
+                key={String(value)}
+                onClick={() => setDjConfig({ isInstrumental: value })}
+                className={cn(
+                  'rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-all',
+                  djConfig.isInstrumental === value
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-b border-border/50 p-5">
+          <div className="pr-6">
+            <div className="text-[14px] font-medium text-foreground">MiniMax API</div>
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              {ttsConfig.apiKey ? '已配置。生成音乐时将手动选择状态，并提醒会产生费用。' : '请先在"语音合成"中配置 MiniMax API 密钥'}
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={cn(
+              'h-2.5 w-2.5 rounded-full',
+              ttsConfig.apiKey ? 'bg-green-500' : 'bg-muted-foreground/30'
+            )} />
+            <span className="text-[13px] text-muted-foreground">
+              {ttsConfig.apiKey ? '就绪' : '未配置'}
+            </span>
+          </div>
+        </div>
+
+        <div className="p-5">
+          <div className="text-[14px] font-medium text-foreground mb-3">状态 → 音乐风格映射</div>
+          <div className="space-y-2">
+            {(Object.entries(WORK_STATE_LABELS) as [string, string][]).map(([state, label]) => (
+              <div key={state} className="flex items-center gap-3 text-[13px]">
+                <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
+                <span className="text-foreground/60">→</span>
+                <span className="text-foreground/80">
+                  {
+                    {
+                      working: 'Lo-fi / Ambient 专注',
+                      task_complete: '交响 / 庆祝切换',
+                      idle: '轻柔 / 钢琴休息',
+                    }[state]
+                  }
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <h3 className="mb-3 text-[14px] font-semibold text-muted-foreground">
+        状态识别
+      </h3>
+      <div className="overflow-hidden rounded-xl border border-border bg-card/40">
+        <div className="flex items-center justify-between border-b border-border/50 p-5">
+          <div className="w-1/3 pr-6">
+            <div className="text-[14px] font-medium text-foreground">识别方式</div>
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              使用稳定规则识别 OpenClaw 的实时状态，不再额外调用 AI 分析。
+            </div>
+          </div>
+          <div className="rounded-lg bg-secondary/50 px-3.5 py-2 text-[13px] font-medium text-foreground">
+            规则引擎
+          </div>
+        </div>
+
+        <div className="p-5">
+          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+            <div className="mb-2 text-[13px] font-medium text-foreground">状态判断规则</div>
+            <div className="space-y-1.5 text-[13px] text-muted-foreground">
+              <div>工作中：最近 20 秒内有活跃 Session。</div>
+              <div>任务完成：刚从活跃状态退出，且最近 90 秒内仍有收尾痕迹。</div>
+              <div>空闲：长时间没有活跃任务。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-full w-full bg-background">
       <div className="flex w-[240px] shrink-0 flex-col border-r border-border bg-sidebar-background">
@@ -937,6 +1137,18 @@ export function SettingsView() {
               <Volume2 className="h-4 w-4 shrink-0" />
               语音合成
             </button>
+            <button
+              onClick={() => setActiveTab('dj')}
+              className={cn(
+                'no-drag flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] transition-colors',
+                activeTab === 'dj'
+                  ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50'
+              )}
+            >
+              <Music className="h-4 w-4 shrink-0" />
+              Vibe 音乐
+            </button>
           </nav>
         </div>
       </div>
@@ -948,6 +1160,7 @@ export function SettingsView() {
           {activeTab === 'model' && renderModelTab()}
           {activeTab === 'memory' && renderMemoryTab()}
           {activeTab === 'tts' && renderTtsTab()}
+          {activeTab === 'dj' && renderDjTab()}
           
           <div className="mt-16 text-center">
             <p className="text-[12px] text-muted-foreground/40">

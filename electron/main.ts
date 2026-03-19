@@ -1,10 +1,11 @@
-import { app, BrowserWindow, shell, utilityProcess } from 'electron';
+import { app, BrowserWindow, shell, utilityProcess, ipcMain } from 'electron';
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
 
 let mainWindow: BrowserWindow | null = null;
+let panelWindow: BrowserWindow | null = null;
 let serverProcess: Electron.UtilityProcess | null = null;
 let mem0Process: Electron.UtilityProcess | null = null;
 let memoryEngineProcess: ChildProcessWithoutNullStreams | null = null;
@@ -238,6 +239,45 @@ async function ensureMemoryEngineAvailable() {
     console.error('Failed to start bundled memory-engine');
   });
 }
+
+// ── OpenClaw 管理面板（独立悬浮窗口）────────────────────────────────────────
+ipcMain.handle('openclaw:open-panel', () => {
+  if (panelWindow && !panelWindow.isDestroyed()) {
+    panelWindow.center();
+    panelWindow.focus();
+    return;
+  }
+
+  panelWindow = new BrowserWindow({
+    width: 920,
+    height: 680,
+    minWidth: 700,
+    minHeight: 500,
+    title: 'OpenClaw 管理',
+    alwaysOnTop: true,
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 14, y: 16 },
+    backgroundColor: '#ffffff',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  panelWindow.loadURL(`http://127.0.0.1:${WEB_PORT}/openclaw-panel`);
+
+  panelWindow.on('closed', () => {
+    panelWindow = null;
+  });
+});
+
+ipcMain.handle('openclaw:close-panel', () => {
+  if (panelWindow && !panelWindow.isDestroyed()) {
+    panelWindow.close();
+    panelWindow = null;
+  }
+});
 
 app.whenReady().then(createWindow);
 

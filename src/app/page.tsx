@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { ChatTopBar, ChatView } from '@/components/chat/chat-view';
 import { SettingsView } from '@/components/settings/settings-view';
 import { AddMasterModal } from '@/components/master/add-master-modal';
+import { MusicPlayerBar } from '@/components/dj/music-player-bar';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -51,6 +52,7 @@ export default function Home() {
           <ChatView />
         </main>
       </div>
+      <MusicPlayerBar />
       <AddMasterModal />
     </div>
   );

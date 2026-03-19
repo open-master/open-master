@@ -16,12 +16,24 @@ extraResources:
     to: standalone
     filter:
       - "**/*"
+      - "!release"
+      - "!release/**"
+      - "!services"
+      - "!services/**"
+      - "!src"
+      - "!src/**"
+      - "!docs"
+      - "!docs/**"
+      - "!electron"
+      - "!electron/**"
+      - "!dist-electron"
+      - "!dist-electron/**"
+      - "!masters"
+      - "!masters/**"
+      - "!data"
+      - "!data/**"
   - from: .next/static
     to: standalone/.next/static
-    filter:
-      - "**/*"
-  - from: public
-    to: standalone/public
     filter:
       - "**/*"
   - from: services/mem0-service/server.cjs
