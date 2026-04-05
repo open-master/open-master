@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Plus, MessageSquarePlus, Trash2 } from 'lucide-react';
+import { Settings, Plus, MessageSquarePlus, Pencil, Trash2 } from 'lucide-react';
 import { getMasterById } from '@/lib/master/registry';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ export function Sidebar() {
     customMasters,
     sidebarCollapsed,
     setShowAddMasterModal,
+    setEditingCustomMasterId,
     newChatForMaster,
     masterChatKeys,
     removeMaster,
@@ -47,7 +48,10 @@ export function Sidebar() {
               角色
             </span>
             <button
-              onClick={() => setShowAddMasterModal(true)}
+              onClick={() => {
+                setEditingCustomMasterId(null);
+                setShowAddMasterModal(true);
+              }}
               className="no-drag flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-accent hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -56,7 +60,10 @@ export function Sidebar() {
         ) : (
           <div className="flex justify-center">
             <button
-              onClick={() => setShowAddMasterModal(true)}
+              onClick={() => {
+                setEditingCustomMasterId(null);
+                setShowAddMasterModal(true);
+              }}
               title="添加角色"
               className="no-drag flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-accent hover:text-foreground"
             >
@@ -109,16 +116,29 @@ export function Sidebar() {
                     <MessageSquarePlus className="h-3 w-3" />
                   </button>
                   {!m.isSystem && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeMaster(m.id);
-                      }}
-                      title="移除"
-                      className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCustomMasterId(m.id);
+                          setShowAddMasterModal(true);
+                        }}
+                        title="编辑"
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/40 hover:bg-accent hover:text-foreground"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMaster(m.id);
+                        }}
+                        title="移除"
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </>
                   )}
                 </div>
               )}

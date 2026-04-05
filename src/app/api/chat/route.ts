@@ -1,7 +1,15 @@
 import { streamText } from 'ai';
+import crypto from 'crypto';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import { getLanguageModel, type ProviderType } from '@/lib/ai/provider';
 import { getMasterById } from '@/lib/master/registry';
-import { importKnowledgeGraph, searchKnowledgeGraph } from '@/lib/memory/client';
+import {
+  addEpisode,
+  importKnowledgeGraph,
+  searchKnowledgeGraph,
+} from '@/lib/memory/client';
 import type { Master } from '@/lib/master/types';
 import type { EmbeddingConfig } from '@/lib/memory/types';
 
@@ -32,6 +40,41 @@ const MEM0_SERVICE_URL =
   process.env.MEM0_SERVICE_URL || 'http://127.0.0.1:3010';
 const GRAPHITI_SEARCH_TIMEOUT_MS = 4000;
 const knowledgeWarmupStatus = new Map<string, 'warming' | 'ready'>();
+
+function getAppDataDir() {
+  return (
+    process.env.OPEN_MASTER_DATA_DIR ||
+    path.join(os.homedir(), 'Library', 'Application Support', 'open-master')
+  );
+}
+
+function getCustomKnowledgeMarkerPath(masterId: string) {
+  return path.join(getAppDataDir(), 'graphiti', 'custom-knowledge', `${masterId}.json`);
+}
+
+function getKnowledgeHash(knowledgeBase: string) {
+  return crypto.createHash('sha256').update(knowledgeBase).digest('hex');
+}
+
+async function getImportedKnowledgeHash(masterId: string): Promise<string | null> {
+  try {
+    const raw = await fs.readFile(getCustomKnowledgeMarkerPath(masterId), 'utf8');
+    const data = JSON.parse(raw) as { hash?: string };
+    return typeof data.hash === 'string' ? data.hash : null;
+  } catch {
+    return null;
+  }
+}
+
+async function markKnowledgeImported(masterId: string, hash: string) {
+  const markerPath = getCustomKnowledgeMarkerPath(masterId);
+  await fs.mkdir(path.dirname(markerPath), { recursive: true });
+  await fs.writeFile(
+    markerPath,
+    JSON.stringify({ hash, importedAt: new Date().toISOString() }, null, 2),
+    'utf8'
+  );
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
@@ -73,6 +116,60 @@ function warmKnowledgeImport(
       console.error('[graphiti] background import failed:', err);
       knowledgeWarmupStatus.delete(master.id);
     });
+}
+
+async function ensureCustomKnowledgeImported(
+  master: Master,
+  llmConfig: {
+    provider: string;
+    model: string;
+    apiKey: string;
+    apiUrl?: string;
+  },
+  embeddingConfig: {
+    provider: string;
+    model: string;
+    apiKey: string;
+    apiUrl: string;
+  }
+) {
+  if (master.isSystem || !master.knowledgeBase.trim()) return;
+
+  const knowledgeHash = getKnowledgeHash(master.knowledgeBase.trim());
+  const statusKey = `${master.id}:${knowledgeHash}`;
+
+  if (knowledgeWarmupStatus.get(statusKey) === 'ready') return;
+  if (knowledgeWarmupStatus.get(statusKey) === 'warming') return;
+
+  const importedHash = await getImportedKnowledgeHash(master.id);
+  if (importedHash === knowledgeHash) {
+    knowledgeWarmupStatus.set(statusKey, 'ready');
+    return;
+  }
+
+  knowledgeWarmupStatus.set(statusKey, 'warming');
+
+  try {
+    const content = `角色：${master.name}\n头衔：${master.title}\n\n${master.knowledgeBase.trim()}`;
+    const result = await addEpisode(
+      master.id,
+      content,
+      llmConfig,
+      embeddingConfig,
+      `${master.name}-knowledge`,
+      'custom_knowledge_base'
+    );
+
+    if (result.status === 'ok') {
+      await markKnowledgeImported(master.id, knowledgeHash);
+      knowledgeWarmupStatus.set(statusKey, 'ready');
+      return;
+    }
+  } catch (err) {
+    console.error('[graphiti] custom knowledge import failed:', err);
+  }
+
+  knowledgeWarmupStatus.delete(statusKey);
 }
 
 export async function POST(req: Request) {
@@ -150,8 +247,12 @@ export async function POST(req: Request) {
         apiUrl: embCfg!.apiUrl,
       };
 
-      // 系统知识包在后台预热，避免首次聊天被导入过程阻塞。
-      warmKnowledgeImport(master, llmConfig, graphEmbeddingConfig);
+      if (master.isSystem) {
+        // 系统知识包在后台预热，避免首次聊天被导入过程阻塞。
+        warmKnowledgeImport(master, llmConfig, graphEmbeddingConfig);
+      } else {
+        await ensureCustomKnowledgeImported(master, llmConfig, graphEmbeddingConfig);
+      }
 
       const graphResult = await withTimeout(
         searchKnowledgeGraph(

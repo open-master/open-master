@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Check, Plus, Sparkles, User } from 'lucide-react';
 import { SYSTEM_MASTERS } from '@/lib/master/registry';
 import { useAppStore } from '@/lib/store';
@@ -62,18 +62,60 @@ function SystemMasterList({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CustomMasterForm({ onClose }: { onClose: () => void }) {
-  const { addCustomMaster } = useAppStore();
+function CustomMasterForm({
+  onClose,
+  editingMaster,
+}: {
+  onClose: () => void;
+  editingMaster?: Master | null;
+}) {
+  const { addCustomMaster, updateCustomMaster, selectMaster } = useAppStore();
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [avatar, setAvatar] = useState('🧠');
   const [greeting, setGreeting] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
+  const [knowledgeBase, setKnowledgeBase] = useState('');
 
   const canSubmit = name.trim() && systemPrompt.trim();
 
-  const handleCreate = () => {
+  useEffect(() => {
+    if (!editingMaster) {
+      setName('');
+      setTitle('');
+      setAvatar('🧠');
+      setGreeting('');
+      setSystemPrompt('');
+      setKnowledgeBase('');
+      return;
+    }
+
+    setName(editingMaster.name);
+    setTitle(editingMaster.title);
+    setAvatar(editingMaster.avatar);
+    setGreeting(editingMaster.greeting);
+    setSystemPrompt(editingMaster.systemPrompt);
+    setKnowledgeBase(editingMaster.knowledgeBase);
+  }, [editingMaster]);
+
+  const handleSubmit = () => {
     if (!canSubmit) return;
+
+    if (editingMaster) {
+      updateCustomMaster(editingMaster.id, {
+        name: name.trim(),
+        nameEn: name.trim(),
+        title: title.trim() || '自定义角色',
+        avatar,
+        greeting: greeting.trim() || `你好，我是${name.trim()}。有什么可以帮你的？`,
+        systemPrompt: systemPrompt.trim(),
+        knowledgeBase: knowledgeBase.trim(),
+      });
+      selectMaster(editingMaster.id);
+      onClose();
+      return;
+    }
+
     const master: Master = {
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: name.trim(),
@@ -83,7 +125,7 @@ function CustomMasterForm({ onClose }: { onClose: () => void }) {
       avatar,
       description: '',
       systemPrompt: systemPrompt.trim(),
-      knowledgeBase: '',
+      knowledgeBase: knowledgeBase.trim(),
       greeting: greeting.trim() || `你好，我是${name.trim()}。有什么可以帮你的？`,
       traits: [],
       expertise: [],
@@ -165,28 +207,55 @@ function CustomMasterForm({ onClose }: { onClose: () => void }) {
         />
       </div>
 
+      <div>
+        <label className="text-[12px] font-medium text-muted-foreground">角色知识</label>
+        <textarea
+          value={knowledgeBase}
+          onChange={(e) => setKnowledgeBase(e.target.value)}
+          placeholder={'可选。粘贴这个角色的背景、方法论、代表观点、常见表达方式等；系统会把这些内容作为角色知识，并逐步导入 Graphiti。\n\n例如：\n- 关注极致产品体验与端到端控制\n- 强调专注、取舍与审美统一\n- 常从愿景、用户体验和产品判断出发'}
+          rows={8}
+          className="mt-1.5 w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-[13px] leading-relaxed placeholder:text-muted-foreground/30 focus:border-ring focus:outline-none"
+        />
+        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground/70">
+          这部分用于补充“这个角色知道什么”。建议填写人物背景、核心理念、代表性观点或你的私有知识摘要。
+        </p>
+      </div>
+
       {/* Submit */}
       <button
-        onClick={handleCreate}
+        onClick={handleSubmit}
         disabled={!canSubmit}
         className="w-full rounded-lg bg-primary py-2.5 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
       >
-        创建角色
+        {editingMaster ? '保存修改' : '创建角色'}
       </button>
     </div>
   );
 }
 
 export function AddMasterModal() {
-  const { showAddMasterModal, setShowAddMasterModal } = useAppStore();
+  const {
+    showAddMasterModal,
+    setShowAddMasterModal,
+    editingCustomMasterId,
+    setEditingCustomMasterId,
+    customMasters,
+  } = useAppStore();
   const [tab, setTab] = useState<Tab>('system');
+  const editingMaster =
+    editingCustomMasterId
+      ? customMasters.find((m) => m.id === editingCustomMasterId) ?? null
+      : null;
 
   if (!showAddMasterModal) return null;
 
   const handleClose = () => {
     setShowAddMasterModal(false);
+    setEditingCustomMasterId(null);
     setTab('system');
   };
+
+  const isEditing = !!editingMaster;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -200,7 +269,7 @@ export function AddMasterModal() {
       <div className="relative z-10 mx-4 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-border bg-background shadow-2xl">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-[16px] font-semibold">添加角色</h2>
+          <h2 className="text-[16px] font-semibold">{isEditing ? '编辑角色' : '添加角色'}</h2>
           <button
             onClick={handleClose}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground/50 hover:bg-accent hover:text-foreground"
@@ -209,40 +278,41 @@ export function AddMasterModal() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex shrink-0 gap-1 border-b border-border px-5 pt-2">
-          <button
-            onClick={() => setTab('system')}
-            className={cn(
-              'flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-[13px] font-medium transition-colors',
-              tab === 'system'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            系统角色
-          </button>
-          <button
-            onClick={() => setTab('custom')}
-            className={cn(
-              'flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-[13px] font-medium transition-colors',
-              tab === 'custom'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <User className="h-3.5 w-3.5" />
-            自定义角色
-          </button>
-        </div>
+        {!isEditing && (
+          <div className="flex shrink-0 gap-1 border-b border-border px-5 pt-2">
+            <button
+              onClick={() => setTab('system')}
+              className={cn(
+                'flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-[13px] font-medium transition-colors',
+                tab === 'system'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              系统角色
+            </button>
+            <button
+              onClick={() => setTab('custom')}
+              className={cn(
+                'flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-[13px] font-medium transition-colors',
+                tab === 'custom'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <User className="h-3.5 w-3.5" />
+              自定义角色
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {tab === 'system' ? (
+          {!isEditing && tab === 'system' ? (
             <SystemMasterList onClose={handleClose} />
           ) : (
-            <CustomMasterForm onClose={handleClose} />
+            <CustomMasterForm onClose={handleClose} editingMaster={editingMaster} />
           )}
         </div>
       </div>

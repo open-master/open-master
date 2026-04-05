@@ -60,6 +60,8 @@ interface AppState {
 
   showAddMasterModal: boolean;
   setShowAddMasterModal: (show: boolean) => void;
+  editingCustomMasterId: string | null;
+  setEditingCustomMasterId: (id: string | null) => void;
 }
 
 const DEFAULT_PROVIDER_CONFIG: ProviderConfig = {
@@ -178,6 +180,8 @@ export const useAppStore = create<AppState>()(
 
       showAddMasterModal: false,
       setShowAddMasterModal: (show) => set({ showAddMasterModal: show }),
+      editingCustomMasterId: null,
+      setEditingCustomMasterId: (id) => set({ editingCustomMasterId: id }),
     }),
     {
       name: 'open-master-storage',
